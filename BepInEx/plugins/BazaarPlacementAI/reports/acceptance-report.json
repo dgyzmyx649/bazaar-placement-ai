@@ -1,0 +1,83 @@
+{
+  "all": {
+    "cases": 40,
+    "mean_ratio": 1.1025413723533664,
+    "min_ratio": 0.9021022905553813,
+    "median_ai_ms": 3813.0465,
+    "max_ai_ms": 11278.8366,
+    "below_current": 0
+  },
+  "real": {
+    "cases": 24,
+    "mean_ratio": 0.987657181512253,
+    "min_ratio": 0.9021022905553813,
+    "median_ai_ms": 2185.9157999999998,
+    "max_ai_ms": 5924.7596,
+    "below_current": 0
+  },
+  "synthetic": {
+    "cases": 16,
+    "mean_ratio": 1.2748676586150363,
+    "min_ratio": 0.9888210061094501,
+    "median_ai_ms": 5916.319100000001,
+    "max_ai_ms": 11278.8366,
+    "below_current": 0
+  },
+  "reference_discovery_ms": 15000,
+  "reference_cpu_parallelism": 4,
+  "ai_discovery_ms": 3500,
+  "ai_cpu_parallelism": 4,
+  "independent_runs": 1000,
+  "seed": 141997,
+  "saved_game_case": {
+    "scores": [
+      192.0,
+      192.0,
+      192.0
+    ],
+    "search_ms": [
+      4458.1966,
+      4402.0625,
+      3945.8896
+    ],
+    "old_ai_score": 161,
+    "original_scores": [
+      189.0,
+      192.0,
+      192.0
+    ],
+    "original_search_ms": [
+      15191.6234,
+      15119.3199,
+      15219.0516
+    ],
+    "same_case_comparison_runs": 1000,
+    "model_inference_ms": [
+      114.4665,
+      31.2872,
+      34.2256
+    ],
+    "game_mono_scores": [
+      192.0,
+      192.0,
+      192.0
+    ],
+    "game_mono_search_ms": [
+      4413.2099,
+      4441.4346000000005,
+      4386.9325
+    ],
+    "game_mono_inference_ms": [
+      71.6572,
+      70.6019,
+      71.8415
+    ]
+  },
+  "mono_integration_checks": 32,
+  "runtime_tree_parity": "32 held-out feature rows, max error 0",
+  "plugin_sha256": "1682c5960bb7fcf151d709b8f30ce911c103483eb79e91c8a386f6885558f3be",
+  "model_sha256": "5f1ff8b66f39d3e13169418b8778d1d3c2431c4c7c9038f278d32011c09683f2",
+  "strict_below_current": 0,
+  "native_fast_path_cases": 14,
+  "model_cases": 26
+}

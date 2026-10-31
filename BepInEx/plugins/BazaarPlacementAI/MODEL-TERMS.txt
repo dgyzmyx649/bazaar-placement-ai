@@ -1,0 +1,6 @@
+Model weights and inference tables (model/ranker.json, model/metadata.json, model/model-info.json)
+
+The project owner releases the model weights under the same MIT License as the plugin source (see LICENSE.txt).
+
+The MIT license does not grant any rights to LookingIN's proprietary compute Worker, The Bazaar's binaries,
+or its database. Those files are not included in this package and must be installed separately.

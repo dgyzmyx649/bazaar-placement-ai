@@ -1,0 +1,14 @@
+{
+  "version": "0.1.4",
+  "schema": "placement-native-score-ranker-v4",
+  "training_layouts": 249791,
+  "training_inventories": 5460,
+  "scored_candidate_layouts": 342730,
+  "model_sha256": "5f1ff8b66f39d3e13169418b8778d1d3c2431c4c7c9038f278d32011c09683f2",
+  "catalog": {
+    "Kind": "etag",
+    "Value": "29644776b72c7a95a2ec30c2102d3870",
+    "SourceSha256": "bee4277523b6075f3bb79601e5c94ac927d73158ec85ed9ef54befa99122c458"
+  },
+  "acceptance_report": "reports/acceptance-report.json"
+}
