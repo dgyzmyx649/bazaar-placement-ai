@@ -25,21 +25,14 @@ LookingIN 的原算法遇到复杂阵容时，要跑满 15 秒才能给出推荐
 
 本插件依赖 LookingIN，必须**先装好 LookingIN，再装本插件**。LookingIN 的文件不在本仓库里，请从 LookingIN 官方发布页下载。
 
-**第 1 步：安装 BepInEx 5**
+**第 1 步：安装 LookingIN 插件 0.247.6**
 
-把 BepInEx 5 装进游戏目录（和 `TheBazaar.exe` 在同一层），并至少成功启动一次游戏，让它生成 `BepInEx/plugins` 等文件夹。
-
-**第 2 步：安装 LookingIN 0.247.6**
-
-1. 关闭游戏。
-2. 到 LookingIN 官方发布页下载 **0.247.6** 版本的 `LookingIN-0.247.6-win-x64.zip`：
-   <https://github.com/LookingIN97/LookingIN-Distribution/releases/tag/v0.247.6>
-3. 解压后，把里面完整的 `LookingIN` 文件夹放进 `BepInEx/plugins/`。
-4. 启动一次游戏，确认 LookingIN 正常工作，再关闭游戏。
+到 LookingIN 官方发布页下载 **0.247.6** 版本，按它的说明装好，进游戏确认 LookingIN 能正常用，再关闭游戏：
+<https://github.com/LookingIN97/LookingIN-Distribution/releases/tag/v0.247.6>
 
 本插件只适配 LookingIN **0.247.6**（计算核心 5.5.7），其他版本需要重新验证。
 
-**第 3 步：安装本插件**
+**第 2 步：安装本插件**
 
 1. 下载本仓库（**Code → Download ZIP**），或者只下载 [`release/BazaarPlacementAI-0.1.6.zip`](release/BazaarPlacementAI-0.1.6.zip)。
 2. 把压缩包里的 `BepInEx` 文件夹合并到游戏目录。
@@ -56,11 +49,11 @@ The Bazaar/
 ├─ TheBazaar.exe
 └─ BepInEx/
    └─ plugins/
-      ├─ LookingIN/                          ← 第 2 步，LookingIN 官方插件
+      ├─ LookingIN/                          ← 第 1 步，LookingIN 官方插件
       │  ├─ LookingIN.dll
       │  ├─ LookingIN.Compute.Worker.exe
       │  └─ ...
-      └─ BazaarPlacementAI/                  ← 第 3 步，本插件
+      └─ BazaarPlacementAI/                  ← 第 2 步，本插件
          ├─ BazaarPlacementAI.dll
          ├─ LookingIN.Compute.Client.dll     ← 从 LookingIN 官方 sdk/ 下载
          ├─ LookingIN.Compute.Contracts.dll  ← 从 LookingIN 官方 sdk/ 下载
