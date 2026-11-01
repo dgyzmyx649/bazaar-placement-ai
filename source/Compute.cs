@@ -18,8 +18,9 @@ namespace BazaarPlacementAI
   public Compute(string modelDirectory,string workerPath,string logs,RuntimeCombatCatalogIdentity expected,Action<string> log)
   {
    model=new ModelRunner(modelDirectory);
-   try{model.ValidateCatalog(expected);}catch{model.Dispose();throw;}
-   try{worker=new ComputeWorkerService(new ComputeClientOptions{WorkerPath=workerPath,WorkerCapacity=4,ClientVersion="BazaarPlacementAI/0.1.6",LogDirectory=logs,ExpectedCatalogIdentity=expected,StartupTimeoutMilliseconds=15000,RequiredCapabilities=new[]{"mind-palace"},Log=log});}
+   // The model only proposes candidates; every score is re-checked by LookingIN's compute core, so a newer item catalog is tolerated
+   if(!model.CatalogMatches(expected))log?.Invoke("模型训练时的物品数据与当前 LookingIN 计算核心不同；继续用模型挑选候选，评分仍由计算核心复核");
+   try{worker=new ComputeWorkerService(new ComputeClientOptions{WorkerPath=workerPath,WorkerCapacity=4,ClientVersion="BazaarPlacementAI/0.1.7",LogDirectory=logs,ExpectedCatalogIdentity=expected,StartupTimeoutMilliseconds=15000,RequiredCapabilities=new[]{"mind-palace"},Log=log});}
    catch{model.Dispose();throw;}
   }
   public async Task Prepare(BoardInput b,CancellationToken token)

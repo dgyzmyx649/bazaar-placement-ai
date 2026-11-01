@@ -9,12 +9,12 @@ namespace BazaarPlacementAI
   public UIHints(Assembly assembly,string key)
   {
    WholeStashKey=key;
-   var localization=assembly.GetType("I.X",true).GetMethods(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Static).Single(m=>m.Name=="A"&&m.ReturnType==typeof(string)&&m.GetParameters().Length==3&&m.GetParameters()[1].ParameterType==typeof(string));
+   var types=LookingInTypes.For(assembly);var localization=types.Localize;
    harmony.Patch(localization,postfix:new HarmonyMethod(typeof(UIHints),nameof(Text)));
-   var coordinator=assembly.GetType("h.y",true);
+   var coordinator=types.Coordinator;
    harmony.Patch(coordinator.GetProperty("OptimizationTimeBudgetMilliseconds").GetGetMethod(),prefix:new HarmonyMethod(typeof(UIHints),nameof(Budget)));
    harmony.Patch(coordinator.GetProperty("OptimizationCoveragePercentage").GetGetMethod(),prefix:new HarmonyMethod(typeof(UIHints),nameof(Coverage)));
-   labels=assembly.GetType("I.Q",true).GetFields(BindingFlags.Static|BindingFlags.NonPublic).Where(f=>f.FieldType.IsGenericType&&f.FieldType.GetGenericTypeDefinition()==typeof(Dictionary<,>)).Select(f=>(IDictionary)f.GetValue(null)).Single(d=>d.Contains("正在寻找更优排列"));
+   labels=types.Labels.GetFields(BindingFlags.Static|BindingFlags.NonPublic).Where(f=>f.FieldType.IsGenericType&&f.FieldType.GetGenericTypeDefinition()==typeof(Dictionary<,>)).Select(f=>(IDictionary)f.GetValue(null)).Single(d=>d.Contains("正在寻找更优排列"));
    foreach(string text in new[]{"正在寻找更优排列","正在计算当前场上最优排列","暂时无法生成推荐排列"})if(labels.Contains(text))originals[text]=labels[text];
   }
   public void Refresh()

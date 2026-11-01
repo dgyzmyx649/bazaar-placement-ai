@@ -5,7 +5,7 @@ using BepInEx.Configuration;
 using UnityEngine;
 namespace BazaarPlacementAI
 {
- [BepInPlugin("local.ai.bazaar-placement","Bazaar Placement AI","0.1.6")]
+ [BepInPlugin("local.ai.bazaar-placement","Bazaar Placement AI","0.1.7")]
  [BepInDependency("local.lookingin.bazaar.combat",BepInDependency.DependencyFlags.HardDependency)]
  public sealed class Plugin:BaseUnityPlugin
  {
@@ -13,7 +13,7 @@ namespace BazaarPlacementAI
   private ConfigEntry<int> budget,evaluations;private ConfigEntry<KeyCode> shortcut;
   private ConfigEntry<bool> backgroundWarmup;private bool warmupScheduled;private float nextWarmup;
   private bool guiShortcutPending;private int guiComparisonMode;private float lastShortcut=-100;
-  private UIHints hints;
+  private UIHints hints;private bool roleWarned;
   private void Awake()
   {
    directory=Path.GetDirectoryName(Info.Location);
@@ -22,7 +22,7 @@ namespace BazaarPlacementAI
    shortcut=Config.Bind("Search","WholeStashKey",KeyCode.G,"Search all stash items in LookingIN's existing panel.");
    backgroundWarmup=Config.Bind("Search","BackgroundWarmup",true,"Load the model and initialize its resident compute worker in the background at game startup. The worker is reused until game exit; no search runs while idle.");
    adapter=new GameAdapter(Path.Combine(directory,"model"));
-   Logger.LogInfo("Placement AI 0.1.6: background warmup and resident compute; G whole stash; Alt+G original comparison; Ctrl+G model comparison. Input backend: "+UnityInput.Current.GetType().Name);
+   Logger.LogInfo("Placement AI 0.1.7: background warmup and resident compute; G whole stash; Alt+G original comparison; Ctrl+G model comparison. Input backend: "+UnityInput.Current.GetType().Name);
   }
   private void Update()
   {
@@ -30,7 +30,7 @@ namespace BazaarPlacementAI
    {
     nextBind=Time.unscaledTime+3;
     try{router=NativeRouter.Attach(adapter,directory,budget.Value,evaluations.Value,s=>Logger.LogInfo(s));lastError=null;try{hints=new UIHints(adapter.LookingInAssembly,shortcut.Value.ToString());Logger.LogInfo("Updated LookingIN search hints and AI progress labels.");}catch(Exception e){Logger.LogWarning("Search hints unavailable: "+e.GetBaseException().Message);}}
-    catch(Exception e){var message=e.GetBaseException().Message;if(message!=lastError){lastError=message;Logger.LogDebug("Waiting for LookingIN: "+message);}}
+    catch(Exception e){var message=e.GetBaseException().Message;bool role=message.StartsWith("LookingIN type role")||message.StartsWith("LookingIN member role");if(role&&!roleWarned){roleWarned=true;Logger.LogWarning("Cannot attach to this LookingIN version: "+message+". LookingIN's original search stays in use; please report this line.");}else if(!role&&message!=lastError)Logger.LogDebug("Waiting for LookingIN: "+message);lastError=message;}
    }
    if(router!=null&&backgroundWarmup.Value&&!warmupScheduled&&Time.unscaledTime>=nextWarmup)
    {

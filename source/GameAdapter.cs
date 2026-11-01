@@ -24,19 +24,24 @@ namespace BazaarPlacementAI
   private object runtime,coordinator,arranger;
   private Assembly lki;
   private readonly Dictionary<string,string> names;
+  // LookingIN versions this build was tested against; others only log a warning (failures fall back to the original search)
+  private static readonly string[] VerifiedLookingIn={"0.247.6","0.248.0"};
+  private static readonly BepInEx.Logging.ManualLogSource Log=BepInEx.Logging.Logger.CreateLogSource("Bazaar Placement AI");
   private static readonly JsonSerializerSettings JsonSettings=new JsonSerializerSettings{ConstructorHandling=ConstructorHandling.AllowNonPublicDefaultConstructor};
   public GameAdapter(string modelDirectory)
   {
    var meta=JObject.Parse(File.ReadAllText(Path.Combine(modelDirectory,"metadata.json")));
    names=((JObject)meta["templates"]).Properties().ToDictionary(p=>p.Name,p=>(string)p.Value["name"],StringComparer.OrdinalIgnoreCase);
   }
+  public LookingInTypes Types {get{return LookingInTypes.For(lki);}}
   public static object Read(object o,string property){return o==null?null:o.GetType().GetProperty(property,Flags)?.GetValue(o,null);}
   private void Bind()
   {
    if(coordinator!=null)return;
    BepInEx.PluginInfo info;
-   if(!Chainloader.PluginInfos.TryGetValue("local.lookingin.bazaar.combat",out info))throw new InvalidOperationException("请先安装并启用 LookingIN 0.247.6");
-   if(info.Metadata.Version.ToString()!="0.247.6")throw new InvalidOperationException("此测试版适配 LookingIN 0.247.6；当前版本需重新验证");
+   if(!Chainloader.PluginInfos.TryGetValue("local.lookingin.bazaar.combat",out info))throw new InvalidOperationException("请先安装并启用 LookingIN");
+   var lookingInVersion=info.Metadata.Version.ToString();
+   if(Array.IndexOf(VerifiedLookingIn,lookingInVersion)<0)Log.LogWarning("LookingIN "+lookingInVersion+" 未经本插件验证（已验证："+string.Join("、",VerifiedLookingIn)+"）；继续尝试，出错时回退 LookingIN 原搜索");
    lki=info.Instance.GetType().Assembly;
    var queue=new Queue<Tuple<object,int>>();queue.Enqueue(Tuple.Create((object)info.Instance,0));int visited=0;
    while(queue.Count>0&&visited++<64)
@@ -49,7 +54,8 @@ namespace BazaarPlacementAI
     {var child=field.GetValue(value);if(child!=null)queue.Enqueue(Tuple.Create(child,next.Item2+1));}
    }
    if(coordinator==null)throw new InvalidOperationException("正在等待 LookingIN 初始化");
-   var fieldInfo=runtime.GetType().GetFields(Flags).SingleOrDefault(f=>f.FieldType.FullName=="i.L");
+   var types=Types;if(coordinator.GetType()!=types.Coordinator)throw new InvalidOperationException("LookingIN type role 'timeline coordinator' resolved to "+types.Coordinator.FullName+" but TimelineCoordinator is "+coordinator.GetType().FullName);
+   var fieldInfo=runtime.GetType().GetFields(Flags).SingleOrDefault(f=>f.FieldType==types.Arranger);
    arranger=fieldInfo?.GetValue(runtime);
    if(arranger==null)throw new InvalidOperationException("当前 LookingIN 移动控制器不可用");
   }
@@ -74,14 +80,14 @@ namespace BazaarPlacementAI
    if(snapshot.HypotheticalCard!=null||snapshot.HypotheticalUpgradeTarget!=null||snapshot.HypotheticalEventPreview!=null||snapshot.HypotheticalEnchantmentTarget!=null)
     throw new InvalidOperationException("请先退出商店或技能假想预览，读取真实库存");
    var native=JsonConvert.DeserializeObject(json,source.GetType(),JsonSettings);
-   var topologyMethod=lki.GetType("s.F",true).GetMethods(Flags).Single(m=>m.IsStatic&&m.ReturnType==typeof(bool)&&m.GetParameters().Length==3&&m.GetParameters()[0].ParameterType==source.GetType()&&m.GetParameters()[1].ParameterType.FullName=="C.C&");
+   var topologyMethod=Types.TopologyBuilder;if(topologyMethod.GetParameters()[0].ParameterType!=source.GetType())throw new InvalidOperationException("LookingIN type role 'live snapshot' does not match the captured snapshot "+source.GetType().FullName);
    object[] topologyArgs={native,null,null};
    if(!(bool)topologyMethod.Invoke(null,topologyArgs))throw new InvalidOperationException("库存拓扑不可用："+topologyArgs[2]);
    var topology=JsonConvert.DeserializeObject<RuntimeInventoryTopology>(JsonConvert.SerializeObject(topologyArgs[1]));
    var items=snapshot.Player.Cards.Where(c=>c.CardType=="Item"&&(c.Zone==RuntimeLiveCardZone.Board||c.Zone==RuntimeLiveCardZone.Stash)).OrderBy(c=>c.Zone==RuntimeLiveCardZone.Board?0:1).ThenBy(c=>c.Position).ToArray();
    if(items.Length>20)throw new InvalidOperationException("候选超过20件，本模型不会截断库存");
    if(items.Length==0)throw new InvalidOperationException("场上还没有可搜索的物品");
-   var declared=lki.GetType("F.e",true).GetProperty("Identity",Flags)?.GetValue(null,null);
+   var declared=Types.IdentitySource.GetProperty("Identity",Flags)?.GetValue(null,null);
    if(declared==null)throw new InvalidOperationException("无法确认 LookingIN 声明的规则数据身份");
    var expected=JsonConvert.DeserializeObject<RuntimeCombatCatalogIdentity>(JsonConvert.SerializeObject(declared));
    int level; snapshot.Player.Attributes.TryGetValue("Level",out level);
@@ -99,13 +105,13 @@ namespace BazaarPlacementAI
    Bind();if(CurrentFingerprint()!=state.Fingerprint)throw new InvalidOperationException("库存已变化，请重新搜索");
    if(!Geometry.Valid(state.Input,layout.Starts))throw new InvalidOperationException("推荐布局无效");
    var dto=BuildRecommendation(state.Input,layout);
-   var result=lki.GetType("C.f",true);var nativeResult=JsonConvert.DeserializeObject(JsonConvert.SerializeObject(new RuntimePlacementOptimizationEvaluation{CanOptimize=true,Recommendation=dto}),result,JsonSettings);
-   var request=Activator.CreateInstance(lki.GetType("J.n",true),true);
-   Set(request,"Mode",Enum.ToObject(lki.GetType("J.N",true),3));Set(request,"Snapshot",state.NativeSnapshot);Set(request,"InventoryTopology",state.NativeTopology);
+   var result=Types.Evaluation;var nativeResult=JsonConvert.DeserializeObject(JsonConvert.SerializeObject(new RuntimePlacementOptimizationEvaluation{CanOptimize=true,Recommendation=dto}),result,JsonSettings);
+   var request=Activator.CreateInstance(Types.Request,true);
+   Set(request,"Mode",Enum.ToObject(Types.Mode,3));Set(request,"Snapshot",state.NativeSnapshot);Set(request,"InventoryTopology",state.NativeTopology);
    Set(request,"ReplaceableItemInstanceIds",state.Input.Pieces.Where(p=>p.OriginalPosition>=0).Select(p=>p.InstanceId).ToArray());
    Set(request,"StashCandidateInstanceIds",state.Input.Pieces.Where(p=>p.OriginalPosition<0).Select(p=>p.InstanceId).ToArray());
    var pins=Read(coordinator,"ActivePlacementPins");
-   var apply=arranger.GetType().GetMethods(Flags).Single(m=>m.Name=="A"&&m.ReturnType==typeof(bool)&&m.GetParameters().Length==4&&m.GetParameters()[0].ParameterType.FullName=="J.n"&&m.GetParameters()[2].ParameterType==typeof(float));
+   var apply=Types.ArrangerApply;
    return (bool)apply.Invoke(arranger,new[]{request,nativeResult,(object)now,pins});
   }
   public static RuntimePlacementRecommendation BuildRecommendation(BoardInput b,RankedLayout layout)
@@ -130,7 +136,7 @@ namespace BazaarPlacementAI
   {
    get
    {
-    Bind();var declared=lki.GetType("F.e",true).GetProperty("Identity",Flags)?.GetValue(null,null);
+    Bind();var declared=Types.IdentitySource.GetProperty("Identity",Flags)?.GetValue(null,null);
     if(declared==null)throw new InvalidOperationException("无法确认 LookingIN 声明的规则数据身份");
     return JsonConvert.DeserializeObject<RuntimeCombatCatalogIdentity>(JsonConvert.SerializeObject(declared));
    }
@@ -142,7 +148,7 @@ namespace BazaarPlacementAI
    var topology=options.InventoryTopology??new RuntimeInventoryTopology();
    var cards=snapshot.Player.Cards.Where(c=>c.CardType=="Item"&&(c.Zone==RuntimeLiveCardZone.Board||c.Zone==RuntimeLiveCardZone.Stash)).ToArray();
    if(cards.Length>20)throw new InvalidOperationException("AI最多支持20件候选");
-   var source=lki.GetType("F.e",true).GetProperty("Identity",Flags).GetValue(null,null);
+   var source=Types.IdentitySource.GetProperty("Identity",Flags).GetValue(null,null);
    int level;snapshot.Player.Attributes.TryGetValue("Level",out level);
    var eligible=new HashSet<string>(options.StashCandidateInstanceIds??Array.Empty<string>(),StringComparer.Ordinal);
    var replaceable=new HashSet<string>(options.ReplaceableItemInstanceIds??Array.Empty<string>(),StringComparer.Ordinal);
@@ -159,15 +165,15 @@ namespace BazaarPlacementAI
    if(IsMoving)throw new InvalidOperationException("正在执行物品移动，请稍候");
    var state=Capture();var capture=Read(coordinator,"ObservedCapture");
    if(Convert.ToBoolean(Read(coordinator,"IsInputSuspended")??false))throw new InvalidOperationException("LookingIN 当前暂停接收输入");
-   var request=Activator.CreateInstance(lki.GetType("J.n",true),true);
-   Set(request,"Mode",Enum.ToObject(lki.GetType("J.N",true),3));Set(request,"Snapshot",state.NativeSnapshot);Set(request,"InventoryTopology",state.NativeTopology);Set(request,"CardNames",Read(capture,"CardNames"));
+   var request=Activator.CreateInstance(Types.Request,true);
+   Set(request,"Mode",Enum.ToObject(Types.Mode,3));Set(request,"Snapshot",state.NativeSnapshot);Set(request,"InventoryTopology",state.NativeTopology);Set(request,"CardNames",Read(capture,"CardNames"));
    var pins=(System.Collections.IEnumerable)Read(coordinator,"ActivePlacementPins");var pinIds=new HashSet<string>(pins.Cast<object>().Select(p=>(string)Read(p,"InstanceId")));
    var board=state.Input.Pieces.Where(p=>p.OriginalPosition>=0&&!pinIds.Contains(p.InstanceId)).Select(p=>p.InstanceId).ToArray();
    Set(request,"ReplaceableItemInstanceIds",board);Set(request,"StashCandidateInstanceIds",state.Input.Pieces.Where(p=>p.OriginalPosition<0).Select(p=>p.InstanceId).ToArray());
    bool hasStash=state.Input.Pieces.Any(p=>p.OriginalPosition<0);
-   if(!hasStash)Set(request,"Mode",Enum.ToObject(lki.GetType("J.N",true),0));
+   if(!hasStash)Set(request,"Mode",Enum.ToObject(Types.Mode,0));
    var marksField=coordinator.GetType().GetFields(Flags).Single(f=>f.FieldType==typeof(HashSet<string>));var marks=(HashSet<string>)marksField.GetValue(coordinator);var previous=marks.ToArray();
-   try{marks.Clear();if(hasStash)marks.UnionWith(board);var start=coordinator.GetType().GetMethods(Flags).Single(m=>m.Name=="A"&&m.ReturnType==typeof(bool)&&m.GetParameters().Length==1&&m.GetParameters()[0].ParameterType.FullName=="J.n");return (bool)start.Invoke(coordinator,new[]{request});}
+   try{marks.Clear();if(hasStash)marks.UnionWith(board);var start=Types.CoordinatorStart;return (bool)start.Invoke(coordinator,new[]{request});}
    finally{marks.Clear();marks.UnionWith(previous);}
   }
   private static void Set(object instance,string name,object value){instance.GetType().GetProperty(name,Flags).SetValue(instance,value,null);}

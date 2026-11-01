@@ -40,6 +40,11 @@ namespace BazaarPlacementAI
    }
   }
   public string Name(string id){return (string)metadata["templates"]?[id.ToLowerInvariant()]?["name"]??id;}
+  public bool CatalogMatches(LookingIN.Compute.Contracts.RuntimeCombatCatalogIdentity expected)
+  {
+   if(nativeRanker==null||expected==null)return true;var c=metadata["catalog"];
+   return c!=null&&string.Equals((string)c["Value"],expected.Value,StringComparison.OrdinalIgnoreCase)&&string.Equals((string)c["SourceSha256"],expected.SourceSha256,StringComparison.OrdinalIgnoreCase);
+  }
   public void ValidateCatalog(LookingIN.Compute.Contracts.RuntimeCombatCatalogIdentity expected)
   {
    if(nativeRanker==null||expected==null)return;var c=metadata["catalog"];

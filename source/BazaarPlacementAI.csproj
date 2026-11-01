@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
- <PropertyGroup><TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion><AssemblyName>BazaarPlacementAI</AssemblyName><Version>0.1.6</Version><DebugType>none</DebugType><EnableDefaultCompileItems>false</EnableDefaultCompileItems><GameDir Condition="'$(GameDir)'==''">E:/steam/steamapps/common/The Bazaar</GameDir><SdkDir Condition="'$(SdkDir)'==''">dependencies/LookingIN</SdkDir></PropertyGroup>
+ <PropertyGroup><TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion><AssemblyName>BazaarPlacementAI</AssemblyName><Version>0.1.7</Version><DebugType>none</DebugType><EnableDefaultCompileItems>false</EnableDefaultCompileItems><GameDir Condition="'$(GameDir)'==''">E:/steam/steamapps/common/The Bazaar</GameDir><SdkDir Condition="'$(SdkDir)'==''">dependencies/LookingIN</SdkDir></PropertyGroup>
  <ItemGroup>
   <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="All"/>
   <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.31.1"/>
@@ -13,7 +13,7 @@
   <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(GameDir)/TheBazaar_Data/Managed/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
   <Reference Include="UnityEngine.InputLegacyModule"><HintPath>$(GameDir)/TheBazaar_Data/Managed/UnityEngine.InputLegacyModule.dll</HintPath><Private>false</Private></Reference>
   <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(GameDir)/TheBazaar_Data/Managed/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
-  <Compile Include="Core.cs"/><Compile Include="RankFeatures.cs"/><Compile Include="TreeRanker.cs"/><Compile Include="CandidateMoves.cs"/><Compile Include="SearchPolicy.cs"/><Compile Include="ModelRunner.cs"/><Compile Include="Compute.cs"/><Compile Include="GameAdapter.cs"/><Compile Include="NativeRouter.cs"/><Compile Include="Plugin.cs"/><Compile Include="UIHints.cs"/>
+  <Compile Include="Core.cs"/><Compile Include="RankFeatures.cs"/><Compile Include="TreeRanker.cs"/><Compile Include="CandidateMoves.cs"/><Compile Include="SearchPolicy.cs"/><Compile Include="ModelRunner.cs"/><Compile Include="Compute.cs"/><Compile Include="GameAdapter.cs"/><Compile Include="LookingInTypes.cs"/><Compile Include="NativeRouter.cs"/><Compile Include="Plugin.cs"/><Compile Include="UIHints.cs"/>
  </ItemGroup>
 </Project>
 

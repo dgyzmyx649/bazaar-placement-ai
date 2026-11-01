@@ -20,16 +20,16 @@ namespace BazaarPlacementAI
   public static volatile bool LastSearchWasAI,AIActive;public static int ProgressEvaluated,DiscoveryBudget=2500;
   public static int NextComparisonMode;
   private object original,coordinator,proxy;private FieldInfo field;private MethodInfo[] methods;
-  private GameAdapter adapter;private int budget,maximum;private Action<string> log;
+  private GameAdapter adapter;private LookingInTypes types;private int budget,maximum;private Action<string> log;
   private volatile Compute compute;private Func<RuntimeCombatCatalogIdentity,Compute> createCompute;private readonly SemaphoreSlim gate=new SemaphoreSlim(1,1);
   private readonly CancellationTokenSource lifetime=new CancellationTokenSource();
   private readonly Dictionary<object,Entry> results=new Dictionary<object,Entry>();
   private sealed class Entry{public BoardInput Input;public int[] Starts;}
   public static NativeRouter Attach(GameAdapter adapter,string directory,int budget,int maximum,Action<string> log)
   {
-   var r=new NativeRouter{adapter=adapter,budget=budget,maximum=maximum,log=log,coordinator=adapter.Coordinator};
+   var r=new NativeRouter{adapter=adapter,budget=budget,maximum=maximum,log=log,coordinator=adapter.Coordinator,types=adapter.Types};
    r.createCompute=expected=>new Compute(Path.Combine(directory,"model"),Path.Combine(Paths.PluginPath,"LookingIN","LookingIN.Compute.Worker.exe"),Path.Combine(Paths.BepInExRootPath,"logs","BazaarPlacementAI"),expected,log);
-   var service=adapter.LookingInAssembly.GetType("C.T",true);var progress=adapter.LookingInAssembly.GetType("C.u",true);
+   var service=r.types.Service;var progress=r.types.ProgressService;
    r.field=r.coordinator.GetType().GetFields(BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public).Single(f=>f.FieldType==service);
    r.original=r.field.GetValue(r.coordinator);if(r.original==null||!progress.IsInstanceOfType(r.original))throw new InvalidOperationException("Unsupported LookingIN service");
    r.proxy=r.CreateProxy(service,progress);r.field.SetValue(r.coordinator,r.proxy);
@@ -71,7 +71,7 @@ namespace BazaarPlacementAI
    if(method.ReturnType.IsGenericType&&method.ReturnType.GetGenericTypeDefinition()==typeof(Task<>))
    {
     var output=method.ReturnType.GetGenericArguments()[0];
-    if(output.FullName=="C.f"&&p.Length>=3&&p[0].ParameterType.FullName=="b.m"&&p[1].ParameterType.FullName=="C.d")
+    if(output==types.Evaluation&&p.Length>=3&&p[0].ParameterType==types.Snapshot&&p[1].ParameterType==types.Options)
     {
      var o=To<RuntimePlacementOptimizationOptions>(args[1]);var s=To<RuntimeLiveSnapshotObservation>(args[0]);
      int comparison=Interlocked.Exchange(ref NextComparisonMode,0);
@@ -89,7 +89,7 @@ namespace BazaarPlacementAI
      catch(Exception e){log("AI capture unavailable; original search: "+e.GetBaseException().Message);}
      LastSearchWasAI=false;
     }
-    if(output.FullName=="b.S"&&p.Length==5&&p[0].ParameterType.FullName=="C.f")
+    if(output==types.Curve&&p.Length==5&&p[0].ParameterType==types.Evaluation)
     {
      Entry entry;lock(results)results.TryGetValue(args[0],out entry);
      if(entry!=null)return Typed(output,Curve(entry,output,(int)args[1],(CancellationToken)args[4]));

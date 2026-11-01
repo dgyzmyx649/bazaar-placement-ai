@@ -5,17 +5,17 @@
 #   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1))) -GameDir "D:\SteamLibrary\steamapps\common\The Bazaar"
 #   & ([scriptblock]::Create((irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1))) -Uninstall
 #
-# 做的事：找到游戏目录 → 检查已装好 LookingIN 0.247.6 → 下载本插件 → 从 LookingIN 官方仓库下载两个 SDK DLL 并校验
+# 做的事：找到游戏目录 → 检查已装好 LookingIN → 下载本插件 → 从 LookingIN 官方仓库下载两个 SDK DLL 并校验
 # SHA256 → 备份旧版本后安装。不会改动 LookingIN 或游戏本身的任何文件。
 param([string]$GameDir = $env:BAZAAR_GAME_DIR, [switch]$Uninstall)
 
 $ErrorActionPreference = 'Stop'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$Version = '0.1.6'
+$Version = '0.1.7'
 $PackageUrl = "https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/release/BazaarPlacementAI-$Version.zip"
-$LookingInPage = 'https://github.com/LookingIN97/LookingIN-Distribution/releases/tag/v0.247.6'
-$NeedLookingIn = '0.247.6'
+$LookingInPage = 'https://github.com/LookingIN97/LookingIN-Distribution/releases/latest'
+$VerifiedLookingIn = @('0.247.6', '0.248.0')  # 实测验证过的 LookingIN 版本
 # LookingIN 官方公开 SDK（MIT），固定到经过测试的版本，并校验哈希
 $SdkBase = 'https://github.com/LookingIN97/LookingIN-Distribution/raw/v0.248.0/sdk'
 $Sdk = [ordered]@{
@@ -87,16 +87,16 @@ if ($Uninstall) {
 # 3. 检查 LookingIN
 $LookingInDll = Join-Path $Plugins 'LookingIN\LookingIN.dll'
 if (-not (Test-Path $LookingInDll)) {
-  Fail "没有找到 LookingIN 插件（$LookingInDll）。请先按 LookingIN 的说明安装 $NeedLookingIn 并进游戏确认能用：$LookingInPage"
+  Fail "没有找到 LookingIN 插件（$LookingInDll）。请先按 LookingIN 的说明安装最新版并进游戏确认能用：$LookingInPage"
 }
 $found = Get-LookingInVersion $LookingInDll
-if ($found -eq $NeedLookingIn) {
+if ($VerifiedLookingIn -contains $found) {
   Say "已找到 LookingIN $found" 'Green'
 } else {
   $shown = if ($found) { $found } else { '未知' }
-  Say "检测到的 LookingIN 版本是 $shown，本插件只在 $NeedLookingIn 上验证过。" 'Yellow'
+  Say "检测到的 LookingIN 版本是 $shown，本插件实测验证过的是 $($VerifiedLookingIn -join '、')。其他版本通常也能用，出问题时会自动退回 LookingIN 原搜索。" 'Yellow'
   $ans = Read-Host '仍然继续安装吗？(y/N)'
-  if ($ans -notmatch '^[yY]') { Say "已取消。可以从这里安装 LookingIN $NeedLookingIn：$LookingInPage"; return }
+  if ($ans -notmatch '^[yY]') { Say "已取消。LookingIN 官方发布页：$LookingInPage"; return }
 }
 
 # 4. 下载

@@ -1,6 +1,6 @@
-Bazaar Placement AI 0.1.6 预览版
+Bazaar Placement AI 0.1.7 预览版
 
-适配 LookingIN 0.247.6 / 计算核心 5.5.7，Windows x64。
+已验证 LookingIN 0.247.6 与 0.248.0，Windows x64。
 
 使用：沿用 LookingIN 原面板；G 搜索全部背包；中键沿用原来的候选选择。
 对比快捷键：Alt+G 使用原算法全背包搜索；Ctrl+G 使用模型辅助全背包搜索。两者都只生成推荐，不自动换位。
@@ -17,5 +17,5 @@ Bazaar Placement AI 0.1.6 预览版
 
 公开发布前请查看 MODEL-TERMS.txt 并确定模型许可；本包为本机验证的预览版本。
 
-需要另外安装：LookingIN 0.247.6（https://github.com/LookingIN97/LookingIN-Distribution/releases/tag/v0.247.6），
+需要另外安装：LookingIN（https://github.com/LookingIN97/LookingIN-Distribution/releases/latest），
 并从 LookingIN 官方仓库 sdk/ 目录下载 LookingIN.Compute.Client.dll 和 LookingIN.Compute.Contracts.dll 放进本文件夹。详见仓库 README.md。

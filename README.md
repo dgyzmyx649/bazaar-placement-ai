@@ -19,7 +19,7 @@ LookingIN 的原算法遇到复杂阵容时，要跑满 15 秒才能给出推荐
 
 ## 下载
 
-点仓库页面右上角的 **Code → Download ZIP**，或者直接下载 [`release/BazaarPlacementAI-0.1.6.zip`](release/BazaarPlacementAI-0.1.6.zip)。
+点仓库页面右上角的 **Code → Download ZIP**，或者直接下载 [`release/BazaarPlacementAI-0.1.7.zip`](release/BazaarPlacementAI-0.1.7.zip)。
 
 ## 安装
 
@@ -27,7 +27,7 @@ LookingIN 的原算法遇到复杂阵容时，要跑满 15 秒才能给出推荐
 
 ### 一行命令安装（推荐）
 
-先装好 LookingIN 0.247.6（见下面第 1 步），**关闭游戏**，然后打开 PowerShell（开始菜单搜索 "PowerShell"），粘贴这一行回车：
+先装好 LookingIN（见下面第 1 步），**关闭游戏**，然后打开 PowerShell（开始菜单搜索 "PowerShell"），粘贴这一行回车：
 
 ```powershell
 irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1 | iex
@@ -36,7 +36,7 @@ irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/instal
 脚本会自动：
 
 1. 从 Steam 找到游戏目录（找不到会让你手动输入）；
-2. 检查 LookingIN 是否已安装、版本是不是 0.247.6；
+2. 检查 LookingIN 是否已安装，并显示它的版本；
 3. 下载本插件，再从 LookingIN 官方仓库下载两个 SDK 文件并校验哈希；
 4. 有旧版本时先备份到 `BepInEx/BazaarPlacementAI-backups/`，再安装。
 
@@ -51,16 +51,16 @@ irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/instal
 
 ### 手动安装
 
-**第 1 步：安装 LookingIN 插件 0.247.6**
+**第 1 步：安装 LookingIN 插件**
 
-到 LookingIN 官方发布页下载 **0.247.6** 版本，按它的说明装好，进游戏确认 LookingIN 能正常用，再关闭游戏：
-<https://github.com/LookingIN97/LookingIN-Distribution/releases/tag/v0.247.6>
+到 LookingIN 官方发布页下载最新版，按它的说明装好，进游戏确认 LookingIN 能正常用，再关闭游戏：
+<https://github.com/LookingIN97/LookingIN-Distribution/releases/latest>
 
-本插件只适配 LookingIN **0.247.6**（计算核心 5.5.7），其他版本需要重新验证。
+已实测验证：LookingIN **0.247.6** 和 **0.248.0**。插件按结构识别 LookingIN 的内部接口，LookingIN 正常更新后通常也能继续用；万一接不上，会在 `BepInEx/LogOutput.log` 里写明原因，并自动退回 LookingIN 原搜索，不影响游戏。
 
 **第 2 步：安装本插件**
 
-1. 下载本仓库（**Code → Download ZIP**），或者只下载 [`release/BazaarPlacementAI-0.1.6.zip`](release/BazaarPlacementAI-0.1.6.zip)。
+1. 下载本仓库（**Code → Download ZIP**），或者只下载 [`release/BazaarPlacementAI-0.1.7.zip`](release/BazaarPlacementAI-0.1.7.zip)。
 2. 把压缩包里的 `BepInEx` 文件夹合并到游戏目录。
 3. 到 LookingIN 官方仓库的 `sdk/` 目录下载这两个 SDK 文件，放进 `BepInEx/plugins/BazaarPlacementAI/`：
    - [`LookingIN.Compute.Client.dll`](https://github.com/LookingIN97/LookingIN-Distribution/raw/v0.248.0/sdk/LookingIN.Compute.Client.dll)

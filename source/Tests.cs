@@ -93,8 +93,8 @@ public static class PlacementTests
  static void Integration(BazaarPlacementAI.Compute engine,string model,RuntimeLiveSnapshotObservation snapshot)
  {
   var asm=Assembly.LoadFrom(@"E:\steam\steamapps\common\The Bazaar\BepInEx\plugins\LookingIN\LookingIN.dll");
-  var service=asm.GetType("C.T",true);var progress=asm.GetType("C.u",true);
-  var original=Fake(service,progress);var coordinator=FormatterServices.GetUninitializedObject(asm.GetType("h.y",true));
+  var types=BazaarPlacementAI.LookingInTypes.For(asm);var service=types.Service;var progress=types.ProgressService;
+  var original=Fake(service,progress);var coordinator=FormatterServices.GetUninitializedObject(types.Coordinator);
   var field=coordinator.GetType().GetFields(BindingFlags.NonPublic|BindingFlags.Instance).Single(f=>f.FieldType==service);field.SetValue(coordinator,original);
   var adapter=new BazaarPlacementAI.GameAdapter(model);Set(adapter,"coordinator",coordinator);Set(adapter,"lki",asm);
   var router=BazaarPlacementAI.NativeRouter.Attach(adapter,Path.GetDirectoryName(model),500,12,Console.WriteLine);
@@ -109,28 +109,28 @@ public static class PlacementTests
    BazaarPlacementAI.NativeRouter.LastSearchWasAI=true;BazaarPlacementAI.NativeRouter.AIActive=true;BazaarPlacementAI.NativeRouter.DiscoveryBudget=2500;BazaarPlacementAI.NativeRouter.ProgressEvaluated=3;hints.Refresh();
    Check(Convert.ToInt32(BazaarPlacementAI.GameAdapter.Read(coordinator,"OptimizationTimeBudgetMilliseconds"))==2500,"existing progress panel shows AI discovery budget");
    Check(((string)BazaarPlacementAI.GameAdapter.Read(coordinator,"OptimizationCoveragePercentage")).Contains("非穷举"),"AI progress never reports misleading exhaustive coverage");
-   var localize=asm.GetType("I.X",true).GetMethods(BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic).Single(m=>m.Name=="A"&&m.GetParameters().Length==2&&m.GetParameters()[0].ParameterType==typeof(string));
+   var localize=types.Localization.GetMethods(BindingFlags.Static|BindingFlags.Public|BindingFlags.NonPublic).Single(m=>m.ReturnType==typeof(string)&&m.GetParameters().Length==2&&m.GetParameters().All(x=>x.ParameterType==typeof(string)));
    string hint=(string)localize.Invoke(null,new object[]{"计算当前场上最优排列","Calculate the best arrangement for the current board"});
    Check(hint.Contains("G")&&(hint.Contains("全背包")||hint.Contains("whole stash")),"existing search tooltip explains G and no-PIN AI behavior");
    BazaarPlacementAI.NativeRouter.AIActive=false;
   }
-  var nativeSnapshot=Native(snapshot,asm.GetType("b.m",true));
+  var nativeSnapshot=Native(snapshot,types.Snapshot);
   var options=new RuntimePlacementOptimizationOptions{ScoreMaximumMilliseconds=8000,ComparisonSampleCount=4,InventoryTopology=new RuntimeInventoryTopology{BoardMinimumPosition=snapshot.BoardMinimumPosition,BoardMaximumPosition=snapshot.BoardMaximumPosition,StashMinimumPosition=0,StashMaximumPosition=9,BoardUnlockedSockets=Enumerable.Repeat(true,10).ToArray(),StashUnlockedSockets=Enumerable.Repeat(true,10).ToArray()},ReplaceableItemInstanceIds=snapshot.Player.Cards.Where(c=>c.Zone==RuntimeLiveCardZone.Board).Select(c=>c.InstanceId).ToArray(),StashCandidateInstanceIds=snapshot.Player.Cards.Where(c=>c.Zone==RuntimeLiveCardZone.Stash).Select(c=>c.InstanceId).ToArray()};
-  var search=service.GetMethods().Single(m=>m.ReturnType.IsGenericType&&m.ReturnType.GetGenericArguments()[0].FullName=="C.f");
+  var search=types.SearchMethod;
   options.PinnedItems=new[]{new RuntimePlacementPin{InstanceId="test",BoardPosition=0}};
   int before=Calls;
-  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,asm.GetType("C.d",true)),(object)CancellationToken.None}))==null&&Calls==before+1,"PIN requests forward to original service without AI");
+  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,types.Options),(object)CancellationToken.None}))==null&&Calls==before+1,"PIN requests forward to original service without AI");
   options.PinnedItems=Array.Empty<RuntimePlacementPin>();before=Calls;
   BazaarPlacementAI.NativeRouter.NextComparisonMode=1;
-  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,asm.GetType("C.d",true)),(object)CancellationToken.None}))==null&&Calls==before+1&&!BazaarPlacementAI.NativeRouter.LastSearchWasAI&&BazaarPlacementAI.NativeRouter.NextComparisonMode==0,"original comparison forwards the same no-PIN request and consumes the override once");
+  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,types.Options),(object)CancellationToken.None}))==null&&Calls==before+1&&!BazaarPlacementAI.NativeRouter.LastSearchWasAI&&BazaarPlacementAI.NativeRouter.NextComparisonMode==0,"original comparison forwards the same no-PIN request and consumes the override once");
   options.PinnedItems=new[]{new RuntimePlacementPin{InstanceId="test",BoardPosition=0}};before=Calls;
   BazaarPlacementAI.NativeRouter.NextComparisonMode=2;
-  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,asm.GetType("C.d",true)),(object)CancellationToken.None}))==null&&Calls==before+1&&!BazaarPlacementAI.NativeRouter.LastSearchWasAI,"model comparison still respects PIN eligibility");
+  Check(Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,types.Options),(object)CancellationToken.None}))==null&&Calls==before+1&&!BazaarPlacementAI.NativeRouter.LastSearchWasAI,"model comparison still respects PIN eligibility");
   options.PinnedItems=Array.Empty<RuntimePlacementPin>();before=Calls;
   var progressMethod=progress.GetMethods().Single();
   var callbackType=progressMethod.GetParameters()[2].ParameterType;
-  var callback=Delegate.CreateDelegate(callbackType,typeof(PlacementTests).GetMethod("OnProgress").MakeGenericMethod(asm.GetType("C.m",true)));
-  var evaluation=Await(progressMethod.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,asm.GetType("C.d",true)),callback,(object)CancellationToken.None}));
+  var callback=Delegate.CreateDelegate(callbackType,typeof(PlacementTests).GetMethod("OnProgress").MakeGenericMethod(types.Progress));
+  var evaluation=Await(progressMethod.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,types.Options),callback,(object)CancellationToken.None}));
   Check(evaluation!=null&&Calls==before,"no-PIN request returns native typed AI recommendation without fallback");
   Check(Convert.ToBoolean(BazaarPlacementAI.GameAdapter.Read(evaluation,"CanOptimize")),"native result enables existing recommendation UI");
   Check(ProgressCalls>0,"AI reports progress through LookingIN's native progress callback");
@@ -139,10 +139,10 @@ public static class PlacementTests
   using(var cancel=new CancellationTokenSource())
   {
    cancel.Cancel();bool canceled=false;
-   try{Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,asm.GetType("C.d",true)),(object)cancel.Token}));}catch(OperationCanceledException){canceled=true;}
+   try{Await(search.Invoke(field.GetValue(coordinator),new[]{nativeSnapshot,Native(options,types.Options),(object)cancel.Token}));}catch(OperationCanceledException){canceled=true;}
    Check(canceled&&Calls==before,"native cancellation propagates without starting fallback search");
   }
-  var curve=service.GetMethods().Single(m=>m.GetParameters().Length==5&&m.GetParameters()[0].ParameterType.FullName=="C.f");
+  var curve=types.CurveMethod;
   var timeline=Await(curve.Invoke(field.GetValue(coordinator),new[]{evaluation,(object)8000,(object)100,(object)1u,(object)CancellationToken.None}));
   Check(timeline!=null&&Convert.ToBoolean(BazaarPlacementAI.GameAdapter.Read(timeline,"CanSimulate"))&&Calls==before,"existing blue-curve request resolves AI result through public compute core");
   Set(router,"compute",null);router.Dispose();Check(ReferenceEquals(field.GetValue(coordinator),original),"detach restores original search service");
