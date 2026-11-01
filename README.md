@@ -25,6 +25,32 @@ LookingIN 的原算法遇到复杂阵容时，要跑满 15 秒才能给出推荐
 
 本插件依赖 LookingIN，必须**先装好 LookingIN，再装本插件**。LookingIN 的文件不在本仓库里，请从 LookingIN 官方发布页下载。
 
+### 一行命令安装（推荐）
+
+先装好 LookingIN 0.247.6（见下面第 1 步），**关闭游戏**，然后打开 PowerShell（开始菜单搜索 "PowerShell"），粘贴这一行回车：
+
+```powershell
+irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1 | iex
+```
+
+脚本会自动：
+
+1. 从 Steam 找到游戏目录（找不到会让你手动输入）；
+2. 检查 LookingIN 是否已安装、版本是不是 0.247.6；
+3. 下载本插件，再从 LookingIN 官方仓库下载两个 SDK 文件并校验哈希；
+4. 有旧版本时先备份到 `BepInEx/BazaarPlacementAI-backups/`，再安装。
+
+不会改动 LookingIN 或游戏本身的任何文件。脚本源码就是仓库里的 [`install.ps1`](install.ps1)，可以先打开看一眼。
+
+游戏不在默认位置，或者想卸载：
+
+```powershell
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1))) -GameDir "D:\SteamLibrary\steamapps\common\The Bazaar"
+& ([scriptblock]::Create((irm https://raw.githubusercontent.com/dgyzmyx649/bazaar-placement-ai/main/install.ps1))) -Uninstall
+```
+
+### 手动安装
+
 **第 1 步：安装 LookingIN 插件 0.247.6**
 
 到 LookingIN 官方发布页下载 **0.247.6** 版本，按它的说明装好，进游戏确认 LookingIN 能正常用，再关闭游戏：
